@@ -5,9 +5,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f6f7f3">
     <title>I tuoi contatti | Rubrica</title>
+    <link rel="stylesheet" href="rubrica.css">
     <script src="rubrica.js" defer></script>
   </head>
   <body>
-    <div id="rubrica-app"></div>
+    <div class="rubrica-page">
+      <header class="rubrica-header">
+        <div class="rubrica-header-inner">
+          <div class="rubrica-brand">
+            <span class="rubrica-brand-mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><circle cx="9" cy="10" r="2.3"/><path d="M5.8 16c.7-1.7 1.8-2.5 3.2-2.5s2.5.8 3.2 2.5M15 9h3m-3 4h3"/></svg>
+            </span>
+            <span>RUBRICA</span>
+          </div>
+          <div class="rubrica-heading-row">
+            <div>
+              <div class="login-logout">
+                <a class="rubrica-login" href="login.html">Login</a>
+              </div>
+              <p class="rubrica-eyebrow">Le persone che contano</p>
+              <h1 class="rubrica-title">I tuoi contatti</h1>
+              <p class="rubrica-subtitle">Tutti i tuoi contatti, raccolti in un unico posto.</p>
+            </div>
+            <div class="rubrica-total" aria-live="polite">
+              <strong id="rubrica-total-number">—</strong>
+              <span>contatti</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="rubrica-content">
+        <div class="rubrica-toolbar">
+          <button class="rubrica-add-button" id="rubrica-add-button" type="button" aria-expanded="false" aria-controls="rubrica-add-form">Aggiungi contatto</button>
+          <label class="rubrica-search-wrap">
+            <span class="rubrica-search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.2 4.2"/></svg>
+            </span>
+            <input class="rubrica-search" id="rubrica-search" type="search" placeholder="Cerca nome, email, città..." aria-label="Cerca contatti" disabled>
+          </label>
+          <p class="rubrica-result-count" id="rubrica-result-count" aria-live="polite">Caricamento contatti...</p>
+        </div>
+
+        <form class="rubrica-add-form" id="rubrica-add-form" hidden>
+          <h2 class="rubrica-form-title" id="rubrica-form-title">Nuovo contatto</h2>
+          <label class="rubrica-field">Nome<input name="Nome" autocomplete="given-name" required></label>
+          <label class="rubrica-field">Cognome<input name="Cognome" autocomplete="family-name" required></label>
+          <label class="rubrica-field">Telefono<input name="Telefono" type="tel" required></label>
+          <label class="rubrica-field">Email<input name="Email" type="email" autocomplete="email" required></label>
+          <label class="rubrica-field">Indirizzo<input name="Indirizzo"></label>
+          <label class="rubrica-field">Gruppo<input name="Gruppo" required></label>
+          <p class="rubrica-form-status" id="rubrica-form-status" role="alert"></p>
+          <div class="rubrica-form-actions">
+            <button class="rubrica-cancel" id="rubrica-cancel-button" type="button">Annulla</button>
+            <button class="rubrica-submit" id="rubrica-submit-button" type="submit">Salva contatto</button>
+          </div>
+        </form>
+
+        <nav class="rubrica-filters" id="rubrica-filters" aria-label="Filtra per gruppo"></nav>
+        <section class="rubrica-grid" id="rubrica-grid" aria-label="Elenco contatti"></section>
+      </main>
+    </div>
   </body>
 </html>
