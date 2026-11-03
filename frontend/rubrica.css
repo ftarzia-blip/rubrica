@@ -18,6 +18,59 @@
       #f6f7f3;
   }
 
+  .login-page {
+    display: grid;
+    min-height: 100vh;
+    place-content: center;
+    gap: 30px;
+    padding: 32px 20px;
+    background:
+      radial-gradient(ellipse at 10% 0%, rgba(215, 235, 221, .6), transparent 32rem),
+      #f6f7f3;
+  }
+
+  .login-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-self: center;
+    color: #277451;
+    font-size: 14px;
+    font-weight: 750;
+    letter-spacing: .04em;
+    text-decoration: none;
+  }
+
+  .login-card {
+    width: min(420px, 100%);
+    padding: 32px;
+    border: 1px solid #e7ebe5;
+    border-radius: 19px;
+    background: #fff;
+    box-shadow: 0 12px 32px rgba(42, 66, 49, .07);
+  }
+
+  .login-card .rubrica-title { font-size: 36px; }
+  .login-description { margin: 10px 0 26px; color: #718078; font-size: 15px; line-height: 1.5; }
+  .login-form { display: grid; gap: 18px; }
+  .login-home-button {
+    display: inline-flex;
+    min-height: 46px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 4px;
+    padding: 11px 16px;
+    border-radius: 12px;
+    background: #2e8054;
+    color: #fff;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background .18s;
+  }
+
+  .login-home-button:hover { background: #246a45; }
+  .login-home-button:focus-visible { outline: 3px solid #9bc9a8; outline-offset: 2px; }
+
   .rubrica-header {
     padding: 34px max(24px, calc((100vw - 1180px) / 2)) 28px;
     background: rgba(255, 255, 255, .72);
@@ -276,6 +329,7 @@
 
   @media (max-width: 900px) { .rubrica-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 620px) {
+    .login-card { padding: 25px 21px; }
     .rubrica-header { padding: 24px 20px 23px; }
     .rubrica-brand { margin-bottom: 27px; }
     .rubrica-heading-row { align-items: flex-start; flex-direction: column; gap: 17px; }

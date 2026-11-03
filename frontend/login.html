@@ -4,12 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f6f7f3">
-    <title>I tuoi contatti | Rubrica</title>
-    <link a href="rubrica.html">
+    <title>Login | Rubrica</title>
     <link rel="stylesheet" href="rubrica.css">
-    <script src="rubrica.js" defer></script>
   </head>
   <body>
-    <div class="logout">
-        <a href="rubrica.html">Logout</a>
-    </div>
+    <main class="login-page">
+      <a class="login-brand" href="rubrica.html" aria-label="Rubrica, torna alla home">
+        <span class="rubrica-brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><circle cx="9" cy="10" r="2.3"/><path d="M5.8 16c.7-1.7 1.8-2.5 3.2-2.5s2.5.8 3.2 2.5M15 9h3m-3 4h3"/></svg>
+        </span>
+        <span>RUBRICA</span>
+      </a>
+
+      <section class="login-card" aria-labelledby="login-title">
+        <p class="rubrica-eyebrow">Bentornato</p>
+        <h1 class="rubrica-title" id="login-title">Accedi</h1>
+        <p class="login-description">Inserisci username e password per continuare.</p>
+
+        <form class="login-form">
+          <label class="rubrica-field" for="login-username">Username
+            <input id="login-username" name="username" type="text" autocomplete="username" required>
+          </label>
+          <label class="rubrica-field" for="login-password">Password
+            <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+          </label>
+          <a class="login-home-button" href="rubrica.html">Torna alla home</a>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>

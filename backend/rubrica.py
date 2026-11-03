@@ -88,7 +88,7 @@ def elimina(indice: int):
 @app.post("/rubrica/modifica/{indice}")
 def modifica(indice: int, nuovo_contatto: Contatto):
     for contatto in rubrica:
-        if int(contatto["ID"])==indice: 
+        if int(contatto["ID"])==indice:
             contatto.update(nuovo_contatto.model_dump(exclude={"ID"}))
             salva_rubrica()
-            return {"messaggio": "contatto salvato"} 
+            return {"messaggio": "contatto salvato"}
