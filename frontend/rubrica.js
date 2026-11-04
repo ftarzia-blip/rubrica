@@ -1,264 +1,280 @@
-const API_URL = window.RUBRICA_API_URL || "http://127.0.0.1:8000";
-const $ = (selector) => document.querySelector(selector);
-const fields = ["Nome", "Cognome", "Telefono", "Email", "Indirizzo", "Gruppo"];
-const inputs = Object.fromEntries(fields.map((name) => [name, $(`[name="${name}"]`)]));
-const ui = {
-  addButton: $("#rubrica-add-button"),
-  cancelButton: $("#rubrica-cancel-button"),
-  filters: $("#rubrica-filters"),
-  form: $("#rubrica-add-form"),
-  formStatus: $("#rubrica-form-status"),
-  formTitle: $("#rubrica-form-title"),
-  grid: $("#rubrica-grid"),
-  resultCount: $("#rubrica-result-count"),
-  search: $("#rubrica-search"),
-  submitButton: $("#rubrica-submit-button"),
-  total: $("#rubrica-total-number"),
+﻿const URL_API = window.RUBRICA_API_URL || "http://127.0.0.1:8000";
 
+const seleziona = function (selettore) {
+  return document.querySelector(selettore);
 };
 
-let contacts = [];
-let activeGroup = "Tutti";
-let editingContact = null;
+const campi = ["Nome", "Cognome", "Telefono", "Email", "Indirizzo", "Gruppo"];
 
-function element(tag, className = "", text) {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  if (text !== undefined) node.textContent = text;
-  return node;
+const inputDelModulo = {};
+for (let i = 0; i < campi.length; i++) {
+  const nomeCampo = campi[i];
+  const selettore = `[name="${nomeCampo}"]`;
+  inputDelModulo[nomeCampo] = seleziona(selettore);
 }
 
-function contactDetail(label, value, href) {
-  const row = element("div", "rubrica-detail");
-  const content = href && value ? element("a", "", value) : element("span", "", value || "Non disponibile");
-  if (href && value) {
-    content.href = href;
-    content.rel = "noopener noreferrer";
+const interfaccia = {
+  aggiungiButton: seleziona("#rubrica-add-button"),
+  annullaButton: seleziona("#rubrica-cancel-button"),
+  filtri: seleziona("#rubrica-filters"),
+  form: seleziona("#rubrica-add-form"),
+  statoForm: seleziona("#rubrica-form-status"),
+  titoloForm: seleziona("#rubrica-form-title"),
+  griglia: seleziona("#rubrica-grid"),
+  conteggioRisultati: seleziona("#rubrica-result-count"),
+  ricerca: seleziona("#rubrica-search"),
+  salvaButton: seleziona("#rubrica-submit-button"),
+  totale: seleziona("#rubrica-total-number"),
+};
+
+let contatti = [];
+let gruppoAttivo = "Tutti";
+let contattoInModifica = null;
+
+function creaElemento(tag, classe = "", testo) {
+  const nodo = document.createElement(tag);
+  if (classe) nodo.className = classe;
+  if (testo !== undefined) nodo.textContent = testo;
+  return nodo;
+}
+
+function dettaglioContatto(etichetta, valore, collegamento) {
+  const riga = creaElemento("div", "rubrica-detail");
+  const contenuto = collegamento && valore ? creaElemento("a", "", valore) : creaElemento("span", "", valore || "Non disponibile");
+
+  if (collegamento && valore) {
+    contenuto.href = collegamento;
+    contenuto.rel = "noopener noreferrer";
   }
-  row.append(element("strong", "", `${label}:`), content);
-  return row;
+
+  riga.append(creaElemento("strong", "", `${etichetta}:`), contenuto);
+  return riga;
 }
 
-function renderContacts() {
-  const query = ui.search.value.trim().toLocaleLowerCase("it");
-  const visible = contacts.filter((contact) => {
-    const matchesGroup = activeGroup === "Tutti" || contact.Gruppo === activeGroup;
-    const searchable = fields.map((field) => contact[field] || "").join(" ").toLocaleLowerCase("it");
-    return matchesGroup && searchable.includes(query);
+function mostraContatti() {
+  const testoRicerca = interfaccia.ricerca.value.trim().toLocaleLowerCase("it");
+  const contattiVisibili = contatti.filter((contatto) => {
+    const appartieneAlGruppo = gruppoAttivo === "Tutti" || contatto.Gruppo === gruppoAttivo;
+    const testoCercabile = campi.map((campo) => contatto[campo] || "").join(" ").toLocaleLowerCase("it");
+    return appartieneAlGruppo && testoCercabile.includes(testoRicerca);
   });
 
-  ui.grid.replaceChildren();
-  ui.resultCount.textContent = `${visible.length} ${visible.length === 1 ? "contatto" : "contatti"}${visible.length !== contacts.length ? ` su ${contacts.length}` : ""}`;
-  if (!visible.length) {
-    const empty = element("div", "rubrica-state");
-    empty.append(
-      element("strong", "", contacts.length ? "Nessun contatto trovato" : "La rubrica è vuota"),
-      element("span", "", contacts.length ? "Prova a modificare la ricerca o il gruppo selezionato." : "Non ci sono ancora contatti da mostrare.")
+  interfaccia.griglia.replaceChildren();
+  interfaccia.conteggioRisultati.textContent = `${contattiVisibili.length} ${contattiVisibili.length === 1 ? "contatto" : "contatti"}${contattiVisibili.length !== contatti.length ? ` su ${contatti.length}` : ""}`;
+
+  if (!contattiVisibili.length) {
+    const vuoto = creaElemento("div", "rubrica-state");
+    vuoto.append(
+      creaElemento("strong", "", contatti.length ? "Nessun contatto trovato" : "La rubrica è vuota"),
+      creaElemento("span", "", contatti.length ? "Prova a modificare la ricerca o il gruppo selezionato." : "Non ci sono ancora contatti da mostrare.")
     );
-    ui.grid.append(empty);
+    interfaccia.griglia.append(vuoto);
     return;
   }
 
-  for (const contact of visible) {
-    const first = contact.Nome || "";
-    const last = contact.Cognome || "";
-    const name = [first, last].filter(Boolean).join(" ") || "Contatto senza nome";
-    const card = element("article", "rubrica-card");
-    const avatar = element("div", "rubrica-avatar", `${first.charAt(0)}${last.charAt(0)}`.toLocaleUpperCase("it") || "?");
-    avatar.style.setProperty("--avatar-hue", String((name.codePointAt(0) || 0) * 7 % 360));
+  for (const contatto of contattiVisibili) {
+    const nome = contatto.Nome || "";
+    const cognome = contatto.Cognome || "";
+    const nomeCompleto = [nome, cognome].filter(Boolean).join(" ") || "Contatto senza nome";
+    const card = creaElemento("article", "rubrica-card");
+    const avatar = creaElemento("div", "rubrica-avatar", `${nome.charAt(0)}${cognome.charAt(0)}`.toLocaleUpperCase("it") || "?");
+    avatar.style.setProperty("--avatar-hue", String((nomeCompleto.codePointAt(0) || 0) * 7 % 360));
     avatar.setAttribute("aria-hidden", "true");
 
-    const person = element("div", "rubrica-person");
-    person.append(element("h2", "rubrica-name", name));
-    if (contact.Gruppo) person.append(element("span", "rubrica-group", contact.Gruppo));
-    const top = element("div", "rubrica-card-top");
-    top.append(avatar, person);
+    const persona = creaElemento("div", "rubrica-person");
+    persona.append(creaElemento("h2", "rubrica-name", nomeCompleto));
+    if (contatto.Gruppo) persona.append(creaElemento("span", "rubrica-group", contatto.Gruppo));
 
-    const details = element("div", "rubrica-details");
-    details.append(
-      contactDetail("Telefono", contact.Telefono, contact.Telefono && `tel:${contact.Telefono.replace(/[^\d+]/g, "")}`),
-      contactDetail("Email", contact.Email, contact.Email && `mailto:${contact.Email}`),
-      contactDetail("Indirizzo", contact.Indirizzo)
+    const intestazione = creaElemento("div", "rubrica-card-top");
+    intestazione.append(avatar, persona);
+
+    const dettagli = creaElemento("div", "rubrica-details");
+    dettagli.append(
+      dettaglioContatto("Telefono", contatto.Telefono, contatto.Telefono && `tel:${contatto.Telefono.replace(/[^\d+]/g, "")}`),
+      dettaglioContatto("Email", contatto.Email, contatto.Email && `mailto:${contatto.Email}`),
+      dettaglioContatto("Indirizzo", contatto.Indirizzo)
     );
 
-    const actions = element("div", "rubrica-card-actions");
-    const edit = element("button", "rubrica-card-action", "Modifica");
-    edit.type = "button";
-    edit.setAttribute("aria-label", `Modifica ${name}`);
-    edit.addEventListener("click", () => beginEditing(contact));
-    const remove = element("button", "rubrica-card-action rubrica-card-action-delete", "Elimina");
-    remove.type = "button";
-    remove.setAttribute("aria-label", `Elimina ${name}`);
-    remove.addEventListener("click", () => deleteContact(contact, remove));
-    actions.append(edit, remove);
-    card.append(top, details, actions);
-    ui.grid.append(card);
+    const azioni = creaElemento("div", "rubrica-card-actions");
+    const modifica = creaElemento("button", "rubrica-card-action", "Modifica");
+    modifica.type = "button";
+    modifica.setAttribute("aria-label", `Modifica ${nomeCompleto}`);
+    modifica.addEventListener("click", () => avviaModifica(contatto));
+
+    const elimina = creaElemento("button", "rubrica-card-action rubrica-card-action-delete", "Elimina");
+    elimina.type = "button";
+    elimina.setAttribute("aria-label", `Elimina ${nomeCompleto}`);
+    elimina.addEventListener("click", () => eliminaContatto(contatto, elimina));
+
+    azioni.append(modifica, elimina);
+    card.append(intestazione, dettagli, azioni);
+    interfaccia.griglia.append(card);
   }
 }
 
-function renderFilters() {
-  const groups = ["Tutti", ...new Set(contacts.map((contact) => contact.Gruppo).filter(Boolean))];
-  if (!groups.includes(activeGroup)) activeGroup = "Tutti";
-  ui.filters.replaceChildren();
-  for (const group of groups) {
-    const button = element("button", "rubrica-filter", group);
-    button.type = "button";
-    button.setAttribute("aria-pressed", String(group === activeGroup));
-    button.addEventListener("click", () => {
-      activeGroup = group;
-      renderFilters();
-      renderContacts();
+function mostraFiltri() {
+  const gruppi = ["Tutti", ...new Set(contatti.map((contatto) => contatto.Gruppo).filter(Boolean))];
+  if (!gruppi.includes(gruppoAttivo)) gruppoAttivo = "Tutti";
+
+  interfaccia.filtri.replaceChildren();
+  for (const gruppo of gruppi) {
+    const pulsante = creaElemento("button", "rubrica-filter", gruppo);
+    pulsante.type = "button";
+    pulsante.setAttribute("aria-pressed", String(gruppo === gruppoAttivo));
+    pulsante.addEventListener("click", () => {
+      gruppoAttivo = gruppo;
+      mostraFiltri();
+      mostraContatti();
     });
-    ui.filters.append(button);
+    interfaccia.filtri.append(pulsante);
   }
 }
 
-function render() {
-  ui.total.textContent = String(contacts.length);
-  renderFilters();
-  renderContacts();
+function aggiornaVista() {
+  interfaccia.totale.textContent = String(contatti.length);
+  mostraFiltri();
+  mostraContatti();
 }
 
-function setFormMode(contact = null) {
-  editingContact = contact;
-  ui.formTitle.textContent = contact ? "Modifica contatto" : "Nuovo contatto";
-  ui.submitButton.textContent = contact ? "Salva modifiche" : "Salva contatto";
-  ui.formStatus.textContent = "";
-  for (const field of fields) inputs[field].value = contact ? contact[field] || "" : "";
+function impostaModalitaModulo(contatto = null) {
+  contattoInModifica = contatto;
+  interfaccia.titoloForm.textContent = contatto ? "Modifica contatto" : "Nuovo contatto";
+  interfaccia.salvaButton.textContent = contatto ? "Salva modifiche" : "Salva contatto";
+  interfaccia.statoForm.textContent = "";
+
+  for (const campo of campi) {
+    inputDelModulo[campo].value = contatto ? contatto[campo] || "" : "";
+  }
 }
 
-function closeForm() {
-  ui.form.reset();
-  setFormMode();
-  ui.form.hidden = true;
-  ui.addButton.setAttribute("aria-expanded", "false");
+function chiudiModulo() {
+  interfaccia.form.reset();
+  impostaModalitaModulo();
+  interfaccia.form.hidden = true;
+  interfaccia.aggiungiButton.setAttribute("aria-expanded", "false");
 }
 
-function beginEditing(contact) {
-  setFormMode(contact);
-  ui.form.hidden = false;
-  ui.addButton.setAttribute("aria-expanded", "true");
-  inputs.Nome.focus();
-  ui.form.scrollIntoView({ behavior: "smooth", block: "start" });
+function avviaModifica(contatto) {
+  impostaModalitaModulo(contatto);
+  interfaccia.form.hidden = false;
+  interfaccia.aggiungiButton.setAttribute("aria-expanded", "true");
+  inputDelModulo.Nome.focus();
+  interfaccia.form.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-async function deleteContact(contact, button) {
-  const name = [contact.Nome, contact.Cognome].filter(Boolean).join(" ") || "questo contatto";
-  if (!window.confirm(`Vuoi eliminare ${name}?`)) return;
+async function eliminaContatto(contatto, pulsante) {
+  const nome = [contatto.Nome, contatto.Cognome].filter(Boolean).join(" ") || "questo contatto";
+  if (!window.confirm(`Vuoi eliminare ${nome}?`)) return;
 
-  button.disabled = true;
+  pulsante.disabled = true;
   try {
-    const response = await fetch(`${API_URL}/rubrica/elimina/${encodeURIComponent(contact.ID)}`, { method: "POST" });
-    if (!response.ok) throw new Error(`Il server ha risposto con ${response.status}.`);
-    contacts = contacts.filter((item) => item.ID !== contact.ID);
-    if (editingContact && editingContact.ID === contact.ID) closeForm();
-    render();
-  } catch (error) {
-    console.error("Impossibile eliminare il contatto:", error);
+    const risposta = await fetch(`${URL_API}/rubrica/elimina/${encodeURIComponent(contatto.ID)}`, { method: "POST" });
+    if (!risposta.ok) throw new Error(`Il server ha risposto con ${risposta.status}.`);
+    contatti = contatti.filter((item) => item.ID !== contatto.ID);
+    if (contattoInModifica && contattoInModifica.ID === contatto.ID) chiudiModulo();
+    aggiornaVista();
+  } catch (errore) {
+    console.error("Impossibile eliminare il contatto:", errore);
     window.alert("Non è stato possibile eliminare il contatto. Verifica che il server sia disponibile e riprova.");
-    button.disabled = false;
+    pulsante.disabled = false;
   }
 }
 
-async function saveContact(event) {
-  event.preventDefault();
-  ui.formStatus.textContent = "";
-  const buttons = [...ui.form.querySelectorAll("button")];
-  buttons.forEach((button) => { button.disabled = true; });
-  const contact = Object.fromEntries(fields.map((field) => [field, inputs[field].value.trim()]));
-  const edited = editingContact;
+async function salvaContatto(evento) {
+  evento.preventDefault();
+  interfaccia.statoForm.textContent = "";
+
+  const pulsanti = [...interfaccia.form.querySelectorAll("button")];
+  pulsanti.forEach((pulsante) => {
+    pulsante.disabled = true;
+  });
+
+  const contatto = Object.fromEntries(campi.map((campo) => [campo, inputDelModulo[campo].value.trim()]));
+  const contattoDaModificare = contattoInModifica;
 
   try {
-    const response = await fetch(
-      edited ? `${API_URL}/rubrica/modifica/${encodeURIComponent(edited.ID)}` : `${API_URL}/rubrica/aggiungi`,
+    const risposta = await fetch(
+      contattoDaModificare ? `${URL_API}/rubrica/modifica/${encodeURIComponent(contattoDaModificare.ID)}` : `${URL_API}/rubrica/aggiungi`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(contact),
+        body: JSON.stringify(contatto),
       }
     );
-    if (!response.ok) throw new Error(`Il server ha risposto con ${response.status}.`);
-    const result = await response.json();
-    if (edited) Object.assign(edited, contact);
-    else contacts.push({ ...contact, ID: result.contatto_ID });
 
-    contacts.sort((a, b) => `${a.Cognome || ""} ${a.Nome || ""}`.localeCompare(`${b.Cognome || ""} ${b.Nome || ""}`, "it"));
-    activeGroup = "Tutti";
-    ui.search.value = "";
-    closeForm();
-    render();
-  } catch (error) {
-    console.error(edited ? "Impossibile modificare il contatto:" : "Impossibile aggiungere il contatto:", error);
-    ui.formStatus.textContent = edited
+    if (!risposta.ok) throw new Error(`Il server ha risposto con ${risposta.status}.`);
+
+    const risultato = await risposta.json();
+    if (contattoDaModificare) Object.assign(contattoDaModificare, contatto);
+    else contatti.push({ ...contatto, ID: risultato.contatto_ID });
+
+    contatti.sort((a, b) => `${a.Cognome || ""} ${a.Nome || ""}`.localeCompare(`${b.Cognome || ""} ${b.Nome || ""}`, "it"));
+    gruppoAttivo = "Tutti";
+    interfaccia.ricerca.value = "";
+    chiudiModulo();
+    aggiornaVista();
+  } catch (errore) {
+    console.error(contattoDaModificare ? "Impossibile modificare il contatto:" : "Impossibile aggiungere il contatto:", errore);
+    interfaccia.statoForm.textContent = contattoDaModificare
       ? "Non è stato possibile modificare il contatto. Verifica che il server sia disponibile e riprova."
       : "Non è stato possibile salvare il contatto. Verifica che il server sia disponibile e riprova.";
   } finally {
-    buttons.forEach((button) => { button.disabled = false; });
+    pulsanti.forEach((pulsante) => {
+      pulsante.disabled = false;
+    });
   }
 }
 
-function showLoadError(error) {
-  console.error("Impossibile caricare i contatti:", error);
-  ui.resultCount.textContent = "Errore di caricamento";
-  const state = element("div", "rubrica-state");
-  state.append(
-    element("strong", "", "Non riesco a raggiungere la rubrica"),
-    element("span", "", "Verifica che il server sia avviato e riprova.")
+function mostraErroreCaricamento(errore) {
+  console.error("Impossibile caricare i contatti:", errore);
+  interfaccia.conteggioRisultati.textContent = "Errore di caricamento";
+
+  const stato = creaElemento("div", "rubrica-state");
+  stato.append(
+    creaElemento("strong", "", "Non riesco a raggiungere la rubrica"),
+    creaElemento("span", "", "Verifica che il server sia avviato e riprova.")
   );
-  const retry = element("button", "rubrica-retry", "Riprova");
-  retry.type = "button";
-  retry.addEventListener("click", loadContacts);
-  state.append(retry);
-  ui.grid.replaceChildren(state);
+
+  const riprova = creaElemento("button", "rubrica-retry", "Riprova");
+  riprova.type = "button";
+  riprova.addEventListener("click", caricaContatti);
+  stato.append(riprova);
+
+  interfaccia.griglia.replaceChildren(stato);
 }
 
-async function loadContacts() {
-  ui.grid.replaceChildren(element("div", "rubrica-state", "Caricamento dei contatti..."));
-  ui.resultCount.textContent = "Caricamento contatti...";
+async function caricaContatti() {
+  interfaccia.griglia.replaceChildren(creaElemento("div", "rubrica-state", "Caricamento dei contatti..."));
+  interfaccia.conteggioRisultati.textContent = "Caricamento contatti...";
+
   try {
-    const response = await fetch(`${API_URL}/contatti`);
-    if (!response.ok) throw new Error(`Il server ha risposto con ${response.status}.`);
-    const result = await response.json();
-    if (!Array.isArray(result)) throw new Error("La risposta del server non contiene un elenco di contatti.");
-    contacts = result;
-    contacts.sort((a, b) => `${a.Cognome || ""} ${a.Nome || ""}`.localeCompare(`${b.Cognome || ""} ${b.Nome || ""}`, "it"));
-    ui.search.disabled = false;
-    render();
-  } catch (error) {         
-    showLoadError(error);
+    const risposta = await fetch(`${URL_API}/contatti`);
+    if (!risposta.ok) throw new Error(`Il server ha risposto con ${risposta.status}.`);
+
+    const risultato = await risposta.json();
+    if (!Array.isArray(risultato)) throw new Error("La risposta del server non contiene un elenco di contatti.");
+
+    contatti = risultato;
+    contatti.sort((a, b) => `${a.Cognome || ""} ${a.Nome || ""}`.localeCompare(`${b.Cognome || ""} ${b.Nome || ""}`, "it"));
+    interfaccia.ricerca.disabled = false;
+    aggiornaVista();
+  } catch (errore) {
+    mostraErroreCaricamento(errore);
   }
 }
 
-ui.addButton.addEventListener("click", () => {
-  if (editingContact) {
-    ui.form.reset();
-    setFormMode();
+interfaccia.aggiungiButton.addEventListener("click", () => {
+  if (contattoInModifica) {
+    interfaccia.form.reset();
+    impostaModalitaModulo();
   } else {
-    ui.form.hidden = !ui.form.hidden;
-    ui.addButton.setAttribute("aria-expanded", String(!ui.form.hidden));
-    if (!ui.form.hidden) inputs.Nome.focus();
+    interfaccia.form.hidden = !interfaccia.form.hidden;
+    interfaccia.aggiungiButton.setAttribute("aria-expanded", String(!interfaccia.form.hidden));
+    if (!interfaccia.form.hidden) inputDelModulo.Nome.focus();
   }
 });
-ui.cancelButton.addEventListener("click", closeForm);
-ui.form.addEventListener("submit", saveContact);
-ui.search.addEventListener("input", renderContacts);
-loadContacts();
 
-
-
-const API = "http://localhost:8000";
-const apiFetch = async (percorso, opzioni = {}) => {
-const token = localStorage.getItem("token");
-const risposta = await fetch(API + percorso, {
-...opzioni,
-headers: { ...opzioni.headers, Authorization: `Bearer ${token}` },
-});
-if (risposta.status === 401) {
-localStorage.removeItem("token");
-mostraLogin(); // la tua funzione che riporta al form di login
-throw new Error("Sessione scaduta: effettua di nuovo il login");
-}
-return risposta.json();
-};
-
-
+interfaccia.annullaButton.addEventListener("click", chiudiModulo);
+interfaccia.form.addEventListener("submit", salvaContatto);
+interfaccia.ricerca.addEventListener("input", mostraContatti);
+caricaContatti();
