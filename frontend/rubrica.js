@@ -278,3 +278,23 @@ interfaccia.annullaButton.addEventListener("click", chiudiModulo);
 interfaccia.form.addEventListener("submit", salvaContatto);
 interfaccia.ricerca.addEventListener("input", mostraContatti);
 caricaContatti();
+
+
+async function prendiToken(credenziali){
+  try {
+    risposta=await fetch("http://127.0.0.1:8000/login",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(credenziali)})
+    
+  if (risposta.ok){
+    throw new Error("si è verificato un errore");
+    }
+    return await risposta.json()
+  }
+  catch (error){
+    console.error("errore")
+  }}
+
+
+
